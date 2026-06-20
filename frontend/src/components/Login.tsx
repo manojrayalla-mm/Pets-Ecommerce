@@ -52,25 +52,57 @@ const Login: React.FC<LoginProps> = ({ isOpen, onClose, onLoginSuccess }) => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsLoading(true);
 
-    setIsLoading(false);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const endpoint = isSignUp ? '/api/auth/register' : '/api/auth/login';
+      const url = `${API_URL}${endpoint}`;
 
-    // Mock successful login/signup
-    onLoginSuccess({
-      name: isSignUp ? formData.name : formData.email.split('@')[0],
-      email: formData.email,
-    });
+      const payload = isSignUp 
+        ? { name: formData.name, email: formData.email, password: formData.password, phone: formData.phone }
+        : { email: formData.email, password: formData.password };
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      phone: '',
-    });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Authentication failed');
+      }
+
+      if (isSignUp) {
+        // Automatically switch to login mode after successful signup
+        setIsSignUp(false);
+        setError('');
+        alert('Registration successful! Please login.');
+      } else {
+        // Save JWT token
+        localStorage.setItem('token', data.token);
+        
+        onLoginSuccess({
+          name: data.name,
+          email: data.email,
+        });
+
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          phone: '',
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || 'Network error occurred. Make sure backend is running.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {

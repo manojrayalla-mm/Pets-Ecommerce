@@ -138,31 +138,112 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    
-    // Simulate API call for payment processing
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    const newOrderId = 'PK' + Date.now().toString().slice(-8);
-    setOrderId(newOrderId);
-    
-    const orderData = {
-      id: newOrderId,
-      customer: formData,
-      items: cartItems,
-      subtotal,
-      gst,
-      total,
-      paymentMethod: formData.paymentMethod,
-      date: new Date().toISOString(),
-    };
-    
-    setIsProcessing(false);
-    setStep(3);
-    
-    // Notify parent after showing success screen
-    setTimeout(() => {
-      onComplete(orderData);
-    }, 100);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("Please log in first to make a payment.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // If Cash on Delivery, just skip Razorpay
+      if (formData.paymentMethod === 'cod') {
+        const newOrderId = 'PK' + Date.now().toString().slice(-8);
+        setOrderId(newOrderId);
+        
+        const orderData = {
+          id: newOrderId,
+          customer: formData,
+          items: cartItems,
+          subtotal,
+          gst,
+          total,
+          paymentMethod: formData.paymentMethod,
+          date: new Date().toISOString(),
+        };
+        
+        setStep(3);
+        setIsProcessing(false);
+        setTimeout(() => {
+          onComplete(orderData);
+        }, 100);
+        return;
+      }
+
+      // Step 1: Call Backend to create Razorpay Order
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const orderRes = await fetch(`${API_URL}/api/payments/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount: total }),
+      });
+
+      if (!orderRes.ok) {
+        throw new Error('Failed to create order on server');
+      }
+
+      const orderData = await orderRes.json();
+      
+      // Step 2: Open Razorpay UI
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YourTestKeyIdHere', // Replace with real key
+        amount: orderData.amount,
+        currency: "INR",
+        name: "Pet Kingdom",
+        description: "Pet Adoption & Supplies",
+        image: "https://images.unsplash.com/photo-1548247416-ec66f4900b2e?w=100",
+        order_id: orderData.id,
+        handler: function (response: any) {
+          // Success callback
+          console.log("Payment Successful!", response);
+          setOrderId(response.razorpay_payment_id || 'PK' + Date.now().toString().slice(-8));
+          
+          const finalOrderData = {
+            id: response.razorpay_payment_id || 'PK' + Date.now().toString().slice(-8),
+            customer: formData,
+            items: cartItems,
+            subtotal,
+            gst,
+            total,
+            paymentMethod: formData.paymentMethod,
+            date: new Date().toISOString(),
+          };
+          
+          setStep(3);
+          setIsProcessing(false);
+          setTimeout(() => {
+            onComplete(finalOrderData);
+          }, 100);
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone
+        },
+        theme: {
+          color: "#9333ea" // purple-600
+        }
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+      
+      razorpay.on('payment.failed', function (response: any) {
+        console.error("Payment Failed:", response.error);
+        alert(`Payment Failed: ${response.error.description}`);
+        setIsProcessing(false);
+      });
+
+      razorpay.open();
+      
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      alert("Payment service is unavailable or misconfigured. Please check console.");
+      setIsProcessing(false);
+    }
   };
 
   const handleClose = () => {

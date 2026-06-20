@@ -1,0 +1,8 @@
+{
+  "name": "pets-ecommerce",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm install --prefix pet-kingdom-pet-store-app && npm run build --prefix pet-kingdom-pet-store-app",
+    "start": "npm run start --prefix pet-kingdom-pet-store-app"
+  }
+}

@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["cd pet-kingdom-pet-store-app && npm install"]
+
+[phases.build]
+cmds = ["cd pet-kingdom-pet-store-app && npm run build"]
+
+[start]
+cmd = "cd pet-kingdom-pet-store-app && npm run start"

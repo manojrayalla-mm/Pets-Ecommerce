@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* ===========================================================
+   Pet Card Images — Fill the container, no gaps, no borders
+   Fully responsive: mobile, tablet, laptop, desktop, TV
+   =========================================================== */
+
+/* Card image container — fixed height, no padding, hides overflow */
+.pet-image-container {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: #f3f4f6;
+  position: relative;
+}
+
+/* The image itself — fills container completely, face centered */
+.pet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  /* Crisp on Retina / high-DPI */
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Smooth zoom only on hover-capable devices */
+@media (hover: hover) {
+  .pet-image {
+    transition: transform 0.5s ease;
+  }
+  .pet-image-container:hover .pet-image {
+    transform: scale(1.05);
+  }
+}
+
+/* ---------- Responsive heights ---------- */
+/* Mobile portrait */
+@media (max-width: 480px) {
+  .pet-image-container { height: 260px; }
+}
+/* Small tablets */
+@media (min-width: 481px) and (max-width: 768px) {
+  .pet-image-container { height: 300px; }
+}
+/* Tablets / small laptops */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .pet-image-container { height: 280px; }
+}
+/* Laptops */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .pet-image-container { height: 280px; }
+}
+/* Large desktops / TVs */
+@media (min-width: 1441px) {
+  .pet-image-container { height: 320px; }
+}
+
+/* ---------- Modal / Detail view ---------- */
+.pet-image-container--modal {
+  height: 320px;
+  background: #f3f4f6;
+}
+@media (min-width: 640px) {
+  .pet-image-container--modal { height: 420px; }
+}
+@media (min-width: 1024px) {
+  .pet-image-container--modal { height: 480px; }
+}
+
+/* ---------- Cart thumbnail ---------- */
+.pet-image-container--thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* High-DPI / Retina sharpening */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .pet-image {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
